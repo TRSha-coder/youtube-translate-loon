@@ -34,9 +34,8 @@
 1. 打开 Loon 应用，进入 **配置** 标签页
 2. 点击 **插件** 选项
 3. 点击右上角的 **+** 按钮，选择 **添加插件**
-4. 在 **URL** 字段中填入以下地址之一：
-   - GitHub 原始文件地址：`https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/YouTube_Translate.plugin`
-   - 或者将本地文件上传到云端后获取的 URL
+4. 在 **URL** 字段中填入以下地址：
+   - `https://raw.githubusercontent.com/trsha-coder/youtube-translate-loon/master/YouTube_Translate.plugin`
 
 5. 在 **别名** 字段中填入：`YouTube 字幕翻译`
 6. 点击 **保存**
@@ -176,6 +175,17 @@ A: 不可以。该插件依赖 ChatGPT API，需要网络连接才能工作。
 开发者不承担任何责任。
 
 ## 更新日志
+
+### v1.1 (2026-03-25)
+- 修复：同步代码中 `$done()` 后缺少 `return` 导致代码继续执行的 Bug
+- 修复：翻译分隔符从 `::` 改为 `|||`，防止字幕内容含有 `::` 导致解析错误
+- 修复：配置脚本增加 API Key 未填写的检查与友好提示
+- 优化：仅处理 `fmt=json3` 格式的字幕请求，避免无效拦截
+- 优化：增加 `max_tokens: 2048` 限制，防止 API 响应过大
+- 优化：增加最大字幕段数限制（120条），防止单次请求超时
+- 优化：插件超时时间从 30s 延长至 60s
+- 优化：增加对 `youtubeembeddedplayer.googleapis.com` 的支持
+- 优化：改进错误日志，输出翻译成功条数
 
 ### v1.0 (2026-03-25)
 - 初始版本发布
