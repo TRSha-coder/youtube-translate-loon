@@ -1,62 +1,60 @@
 /**
  * YouTube 字幕翻译脚本 (Loon)
- * 版本: 1.5 - 添加通知调试
+ * 版本: 2.0 - 独立配置版，无需 BoxJS 或持久化存储
+ *
+ * ========== 使用前只需修改以下 3 行 ==========
+ */
+var API_KEY = "sk-在这里填入你的APIKey";           // 必填：你的 OpenAI API Key
+var API_MODEL = "gpt-3.5-turbo";                   // 可选：翻译模型
+var API_URL = "https://api.openai.com/v1/chat/completions"; // 可选：API 地址（中转服务请修改）
+/**
+ * =============================================
  */
 
-const originalBody = $response.body;
+var originalBody = $response.body;
 
 if (!originalBody) {
     $done({});
     return;
 }
 
-const apiKey = $persistentStore.read("ChatGPT_API_Key");
-const customModel = $persistentStore.read("ChatGPT_Model") || "gpt-3.5-turbo";
-const customApiUrl = $persistentStore.read("ChatGPT_API_URL") || "https://api.openai.com/v1/chat/completions";
+// 支持从持久化存储读取（BoxJS 配置优先）
+var apiKey = $persistentStore.read("ChatGPT_API_Key") || API_KEY;
+var model  = $persistentStore.read("ChatGPT_Model")   || API_MODEL;
+var apiUrl = $persistentStore.read("ChatGPT_API_URL") || API_URL;
 
-// 调试通知：确认脚本已运行
-$notification.post(
-    "YouTube翻译 - 脚本已触发",
-    apiKey ? "API Key: " + apiKey.substring(0, 8) + "..." : "⚠️ 未找到 API Key",
-    "Body长度: " + originalBody.length + " | 格式: " + (originalBody.trim().startsWith("<?xml") || originalBody.trim().startsWith("<transcript") ? "XML" : "JSON/其他")
-);
-
-if (!apiKey) {
-    console.log("[YouTube翻译] 未配置 API Key，返回原始字幕");
+if (!apiKey || apiKey === "sk-在这里填入你的APIKey") {
+    console.log("[YouTube翻译] 请在脚本顶部填入 API_KEY");
     $done({ body: originalBody });
     return;
 }
 
-const MAX_SEGMENTS = 60;
-const SEP = "|||";
+var MAX_SEGMENTS = 60;
+var SEP = "|||";
+var PROMPT = "你是专业字幕翻译员，将带编号的字幕翻译成简体中文。\n格式：编号" + SEP + "译文（一行一条）\n仅输出译文，不加解释。若已是中文原样输出。";
 
-const systemPrompt = "你是专业字幕翻译员，将带编号的字幕翻译成简体中文。\n格式：编号" + SEP + "译文（一行一条）\n仅输出译文，不加解释。若已是中文原样输出。";
-
-function safeFinish(body) {
-    try { $done({ body: body || originalBody }); } catch(e) {}
+function safeFinish(b) {
+    try { $done({ body: b || originalBody }); } catch(e) {}
 }
 
-function callApi(texts, callback) {
+function callApi(texts, cb) {
     var prompt = texts.map(function(t, i) { return i + SEP + t; }).join("\n");
     try {
         $httpClient.post({
-            url: customApiUrl,
+            url: apiUrl,
             headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey },
             body: JSON.stringify({
-                model: customModel,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: prompt }
-                ],
+                model: model,
+                messages: [{ role: "system", content: PROMPT }, { role: "user", content: prompt }],
                 temperature: 0.3,
                 max_tokens: 2000
             })
-        }, function(error, resp, data) {
+        }, function(err, resp, data) {
             try {
-                if (error) { console.log("[YouTube翻译] API错误: " + error); callback(null); return; }
+                if (err) { console.log("[YouTube翻译] API请求失败: " + err); cb(null); return; }
                 var res = JSON.parse(data);
-                if (res.error) { console.log("[YouTube翻译] API返回错误: " + res.error.message); callback(null); return; }
-                if (!res.choices || !res.choices[0]) { callback(null); return; }
+                if (res.error) { console.log("[YouTube翻译] API错误: " + res.error.message); cb(null); return; }
+                if (!res.choices || !res.choices[0]) { cb(null); return; }
                 var dict = {};
                 res.choices[0].message.content.trim().split("\n").forEach(function(line) {
                     var si = line.indexOf(SEP);
@@ -66,16 +64,10 @@ function callApi(texts, callback) {
                         if (!isNaN(idx) && txt) dict[idx] = txt;
                     }
                 });
-                callback(dict);
-            } catch(e) {
-                console.log("[YouTube翻译] 解析响应异常: " + e);
-                callback(null);
-            }
+                cb(dict);
+            } catch(e) { console.log("[YouTube翻译] 解析失败: " + e); cb(null); }
         });
-    } catch(e) {
-        console.log("[YouTube翻译] 发起请求异常: " + e);
-        callback(null);
-    }
+    } catch(e) { console.log("[YouTube翻译] 请求异常: " + e); cb(null); }
 }
 
 function decodeXml(s) {
@@ -100,18 +92,12 @@ try {
                 if (segments.length >= MAX_SEGMENTS) break;
             }
         }
-
         if (segments.length === 0) { safeFinish(originalBody); return; }
 
         callApi(segments.map(function(s) { return s.text; }), function(dict) {
             try {
-                if (!dict || Object.keys(dict).length === 0) {
-                    console.log("[YouTube翻译] 翻译失败，返回原始字幕");
-                    safeFinish(originalBody);
-                    return;
-                }
-                var result = body;
-                var offset = 0;
+                if (!dict || Object.keys(dict).length === 0) { safeFinish(originalBody); return; }
+                var result = body, offset = 0;
                 segments.forEach(function(seg, idx) {
                     if (dict[idx] !== undefined) {
                         var newText = encodeXml(dict[idx]);
@@ -121,12 +107,9 @@ try {
                         offset += newText.length - seg.raw.length;
                     }
                 });
-                console.log("[YouTube翻译] XML翻译完成，共" + Object.keys(dict).length + "条");
+                console.log("[YouTube翻译] 完成，共翻译 " + Object.keys(dict).length + " 条");
                 safeFinish(result);
-            } catch(e) {
-                console.log("[YouTube翻译] XML替换异常: " + e);
-                safeFinish(originalBody);
-            }
+            } catch(e) { console.log("[YouTube翻译] XML替换异常: " + e); safeFinish(originalBody); }
         });
 
     } else {
@@ -134,16 +117,14 @@ try {
         var data = JSON.parse(body);
         var events = data.events;
         if (!events || events.length === 0) { safeFinish(originalBody); return; }
-
         var texts = [], mapping = [];
         for (var i = 0; i < events.length; i++) {
             var ev = events[i];
             if (ev.segs) {
                 for (var j = 0; j < ev.segs.length; j++) {
-                    var seg = ev.segs[j];
-                    var raw = seg.utf8;
-                    if (raw && raw.trim() && raw.trim() !== "\n") {
-                        texts.push(raw.replace(/\n/g, " ").trim());
+                    var sg = ev.segs[j];
+                    if (sg.utf8 && sg.utf8.trim() && sg.utf8.trim() !== "\n") {
+                        texts.push(sg.utf8.replace(/\n/g, " ").trim());
                         mapping.push({ ei: i, si: j });
                         if (texts.length >= MAX_SEGMENTS) break;
                     }
@@ -151,29 +132,18 @@ try {
             }
             if (texts.length >= MAX_SEGMENTS) break;
         }
-
         if (texts.length === 0) { safeFinish(originalBody); return; }
 
         callApi(texts, function(dict) {
             try {
-                if (!dict || Object.keys(dict).length === 0) {
-                    console.log("[YouTube翻译] 翻译失败，返回原始字幕");
-                    safeFinish(originalBody);
-                    return;
-                }
+                if (!dict || Object.keys(dict).length === 0) { safeFinish(originalBody); return; }
                 var count = 0;
                 mapping.forEach(function(mp, idx) {
-                    if (dict[idx] !== undefined) {
-                        events[mp.ei].segs[mp.si].utf8 = dict[idx];
-                        count++;
-                    }
+                    if (dict[idx] !== undefined) { events[mp.ei].segs[mp.si].utf8 = dict[idx]; count++; }
                 });
-                console.log("[YouTube翻译] JSON翻译完成，共" + count + "条");
+                console.log("[YouTube翻译] 完成，共翻译 " + count + " 条");
                 safeFinish(JSON.stringify(data));
-            } catch(e) {
-                console.log("[YouTube翻译] JSON替换异常: " + e);
-                safeFinish(originalBody);
-            }
+            } catch(e) { console.log("[YouTube翻译] JSON替换异常: " + e); safeFinish(originalBody); }
         });
     }
 
