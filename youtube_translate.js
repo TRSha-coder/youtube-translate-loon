@@ -1,9 +1,9 @@
 /**
  * YouTube 字幕翻译脚本 (Loon)
- * 版本: 1.4 - 全面加固错误处理，任何异常均回退原始字幕
+ * 版本: 1.5 - 添加通知调试
  */
 
-const originalBody = $response.body; // 始终保存原始 body 作为兜底
+const originalBody = $response.body;
 
 if (!originalBody) {
     $done({});
@@ -13,6 +13,13 @@ if (!originalBody) {
 const apiKey = $persistentStore.read("ChatGPT_API_Key");
 const customModel = $persistentStore.read("ChatGPT_Model") || "gpt-3.5-turbo";
 const customApiUrl = $persistentStore.read("ChatGPT_API_URL") || "https://api.openai.com/v1/chat/completions";
+
+// 调试通知：确认脚本已运行
+$notification.post(
+    "YouTube翻译 - 脚本已触发",
+    apiKey ? "API Key: " + apiKey.substring(0, 8) + "..." : "⚠️ 未找到 API Key",
+    "Body长度: " + originalBody.length + " | 格式: " + (originalBody.trim().startsWith("<?xml") || originalBody.trim().startsWith("<transcript") ? "XML" : "JSON/其他")
+);
 
 if (!apiKey) {
     console.log("[YouTube翻译] 未配置 API Key，返回原始字幕");
