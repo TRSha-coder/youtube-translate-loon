@@ -1,12 +1,15 @@
 #!name=YouTube 字幕翻译 (ChatGPT)
 #!desc=拦截 YouTube 官方 App 的字幕请求，调用 ChatGPT API 将字幕实时翻译为中文。使用前请先运行配置脚本设置 API Key。
-#!author=Manus
+#!author=TRSha-coder
 #!date=2026-03-25
-#!version=1.2
+#!version=1.3
 
 [Script]
-# 拦截 YouTube 字幕请求，获取响应体进行翻译并替换
-http-response ^https?:\/\/(www\.youtube\.com|youtubeembeddedplayer\.googleapis\.com)\/api\/timedtext requires-body=true, timeout=60, script-path=https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_translate.js, tag=YouTube字幕翻译
+# 步骤1：拦截字幕请求，将格式从 srv3/vtt (XML) 改为 json3 (JSON)
+http-request ^https?:\/\/www\.youtube\.com\/api\/timedtext requires-body=false, timeout=10, script-path=https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_request.js, tag=YouTube字幕格式转换
+
+# 步骤2：拦截字幕响应，调用 ChatGPT API 翻译 JSON 字幕
+http-response ^https?:\/\/www\.youtube\.com\/api\/timedtext requires-body=true, timeout=60, script-path=https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_translate.js, tag=YouTube字幕翻译
 
 [MITM]
-hostname = www.youtube.com, youtubeembeddedplayer.googleapis.com
+hostname = www.youtube.com
