@@ -1,14 +1,13 @@
 /**
  * YouTube 字幕翻译脚本 (Loon)
  * 拦截 YouTube 字幕请求，使用 ChatGPT API 将其翻译为中文
- * 版本: 1.1
+ * 版本: 1.2
  */
 
 const url = $request.url;
 let body = $response.body;
 
-// 仅处理 JSON 格式的字幕 (fmt=json3)
-if (!body || !url.includes("fmt=json3")) {
+if (!body) {
     $done({});
     return;
 }
