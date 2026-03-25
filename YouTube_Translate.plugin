@@ -5,10 +5,7 @@
 #!version=1.3
 
 [Script]
-# 步骤1：拦截字幕请求，将格式从 srv3/vtt (XML) 改为 json3 (JSON)
-http-request ^https?:\/\/www\.youtube\.com\/api\/timedtext requires-body=false, timeout=10, script-path=https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_request.js, tag=YouTube字幕格式转换
-
-# 步骤2：拦截字幕响应，调用 ChatGPT API 翻译 JSON 字幕
+# 拦截 YouTube 字幕响应，支持 srv3 (XML) 和 json3 (JSON) 两种格式
 http-response ^https?:\/\/www\.youtube\.com\/api\/timedtext requires-body=true, timeout=60, script-path=https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_translate.js, tag=YouTube字幕翻译
 
 [MITM]
