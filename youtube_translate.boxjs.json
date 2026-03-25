@@ -1,46 +1,51 @@
-[
-  {
-    "id": "youtube-translate-chatgpt",
-    "name": "YouTube 字幕翻译",
-    "descs": [
-      "使用 ChatGPT API 将 YouTube 字幕实时翻译为中文",
-      "配置好 API Key 后，在 Loon 中启用插件即可使用"
-    ],
-    "author": "@TRSha-coder",
-    "homepage": "https://github.com/TRSha-coder/youtube-translate-loon",
-    "icons": [
-      "https://raw.githubusercontent.com/Orz-3/mini/master/Color/YouTube.png",
-      "https://raw.githubusercontent.com/Orz-3/mini/master/Color/YouTube.png"
-    ],
-    "items": [
-      {
-        "id": "ChatGPT_API_Key",
-        "name": "API Key",
-        "val": "",
-        "type": "text",
-        "desc": "OpenAI API Key，格式为 sk-xxxxxxxx，也支持第三方中转服务的 Key"
-      },
-      {
-        "id": "ChatGPT_Model",
-        "name": "翻译模型",
-        "val": "gpt-3.5-turbo",
-        "type": "select",
-        "desc": "翻译使用的模型，gpt-3.5-turbo 成本低，gpt-4o 质量更高",
-        "items": [
-          "gpt-3.5-turbo",
-          "gpt-4o-mini",
-          "gpt-4o",
-          "gpt-4-turbo",
-          "gpt-4"
-        ]
-      },
-      {
-        "id": "ChatGPT_API_URL",
-        "name": "API 地址",
-        "val": "https://api.openai.com/v1/chat/completions",
-        "type": "text",
-        "desc": "使用官方 OpenAI 无需修改，使用国内中转请填写对应地址"
-      }
-    ]
-  }
-]
+{
+  "id": "youtube-translate-loon.sub",
+  "name": "YouTube 字幕翻译",
+  "author": "@TRSha-coder",
+  "icon": "https://raw.githubusercontent.com/Orz-3/mini/master/Color/YouTube.png",
+  "repo": "https://github.com/TRSha-coder/youtube-translate-loon",
+  "apps": [
+    {
+      "id": "youtube-translate-chatgpt",
+      "name": "YouTube 字幕翻译",
+      "keys": [
+        "ChatGPT_API_Key",
+        "ChatGPT_Model",
+        "ChatGPT_API_URL"
+      ],
+      "settings": [
+        {
+          "id": "ChatGPT_API_Key",
+          "name": "API Key",
+          "val": "",
+          "type": "text",
+          "placeholder": "sk-xxxxxxxxxxxxxxxxxxxxxxxx",
+          "desc": "OpenAI API Key，也支持第三方中转服务的 Key"
+        },
+        {
+          "id": "ChatGPT_Model",
+          "name": "翻译模型",
+          "val": "gpt-3.5-turbo",
+          "type": "text",
+          "placeholder": "gpt-3.5-turbo / gpt-4o-mini / gpt-4o",
+          "desc": "翻译使用的模型，gpt-3.5-turbo 成本低，gpt-4o 质量更高"
+        },
+        {
+          "id": "ChatGPT_API_URL",
+          "name": "API 地址",
+          "val": "https://api.openai.com/v1/chat/completions",
+          "type": "text",
+          "placeholder": "https://api.openai.com/v1/chat/completions",
+          "desc": "使用 OpenAI 官方服务无需修改；使用国内中转请填写对应地址"
+        }
+      ],
+      "author": "@TRSha-coder",
+      "repo": "https://github.com/TRSha-coder/youtube-translate-loon",
+      "script": "https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_translate.js",
+      "icons": [
+        "https://raw.githubusercontent.com/Orz-3/mini/master/Color/YouTube.png",
+        "https://raw.githubusercontent.com/Orz-3/mini/master/Color/YouTube.png"
+      ]
+    }
+  ]
+}
