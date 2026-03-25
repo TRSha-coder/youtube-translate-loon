@@ -1,15 +1,11 @@
 #!name=YouTube 字幕翻译 (ChatGPT)
 #!desc=拦截 YouTube 官方 App 的字幕请求，调用 ChatGPT API 将英文字幕实时翻译为中文。使用前请先运行配置脚本设置 API Key。
 #!author=Manus
-
 #!date=2026-03-25
 
 [Script]
 # 拦截 YouTube 字幕请求，获取响应体进行翻译并替换
-http-response ^https?:\/\/www\.youtube\.com\/api\/timedtext requires-body=true, timeout=30, script-path=youtube_translate.js, tag=YouTube字幕翻译
-
-# 配置 API Key 的辅助脚本（可选，可手动在 Loon 中执行）
-# cron "0 0 * * *" script-path=set_chatgpt_api.js, tag=配置ChatGPT_API, enable=false
+http-response ^https?:\/\/www\.youtube\.com\/api\/timedtext requires-body=true, timeout=30, script-path=https://raw.githubusercontent.com/TRSha-coder/youtube-translate-loon/master/youtube_translate.js, tag=YouTube字幕翻译
 
 [MITM]
 hostname = www.youtube.com
